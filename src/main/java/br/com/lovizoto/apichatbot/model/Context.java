@@ -15,11 +15,11 @@ public class Context {
     @Column(name = "session_id", nullable = false)
     private String sessionId;
 
-    @Column(name = "context_json", nullable = false)
+    @Column(name = "context_json", nullable = false, columnDefinition = "TEXT")
     private String contextJson;
 
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
     public String getId() {
         return id;

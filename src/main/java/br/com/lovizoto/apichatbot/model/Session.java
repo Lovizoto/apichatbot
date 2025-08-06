@@ -1,5 +1,6 @@
 package br.com.lovizoto.apichatbot.model;
 
+import br.com.lovizoto.commons.enums.SessionStatus;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -13,17 +14,18 @@ public class Session {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private String userId;
 
-    @Column(name = "started_at")
+    @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;
 
     @Column(name = "last_active")
     private LocalDateTime lastActive;
 
     @Column(name = "status")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private SessionStatus status = SessionStatus.ACTIVE;
 
 
     public String getId() {
@@ -58,11 +60,11 @@ public class Session {
         this.lastActive = lastActive;
     }
 
-    public String getStatus() {
+    public SessionStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(SessionStatus status) {
         this.status = status;
     }
 }

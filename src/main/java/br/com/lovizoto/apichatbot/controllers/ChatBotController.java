@@ -1,9 +1,6 @@
 package br.com.lovizoto.apichatbot.controllers;
 
-import br.com.lovizoto.apichatbot.model.Message;
-import br.com.lovizoto.apichatbot.services.ChatBotService;
 import br.com.lovizoto.commons.dto.MessageLog;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
