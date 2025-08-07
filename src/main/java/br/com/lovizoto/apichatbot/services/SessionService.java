@@ -23,9 +23,12 @@ public class SessionService {
 
     private final ContextRepository contextRepository;
 
-    public SessionService(SessionRepository sessionRepository, ContextRepository contextRepository) {
+    private final NlpService nlpService;
+
+    public SessionService(SessionRepository sessionRepository, ContextRepository contextRepository, NlpService nlpService) {
         this.sessionRepository = sessionRepository;
         this.contextRepository = contextRepository;
+        this.nlpService = nlpService;
     }
 
     public String createSession(String userId) {
@@ -57,37 +60,49 @@ public class SessionService {
         return session.getId();
     }
 
+
     public String processMessage(String sessionId, String message) throws JsonProcessingException {
 
-        Session session = sessionRepository.findById(sessionId).orElse(null); //exception
+        Context context = contextRepository.findBySessionId(sessionId).orElseThrow(); //handle with exception
 
-        //Update Last Activity
-        session.setLastActive(LocalDateTime.now());
-        sessionRepository.save(session);
-
-        //Recover and update context
-        Context context = contextRepository.findBySessionId(session.getId()).orElseThrow(); //exception
-
-        Map<String, Object> contextMap = deserializeContext(context.getContextJson());
-
-        String response = generateResponse(message, contextMap);
-
-
-        context.setContextJson(serializeContext(contextMap));
-        context.setUpdatedAt(LocalDateTime.now());
-        contextRepository.save(context);
+        String response = nlpService.processMessage(message, context.getContextJson());
+        //context.updateContext(response)
 
         return response;
 
     }
 
-    private Map<String, Object> deserializeContext(String json) throws JsonProcessingException {
-        return new ObjectMapper().readValue(json, new TypeReference<Map<String, Object>>() {});
-    }
-
-    private String serializeContext(Map<String, Object> map) throws JsonProcessingException {
-        return new ObjectMapper().writeValueAsString(map);
-    }
+//    public String processMessage(String sessionId, String message) throws JsonProcessingException {
+//
+//        Session session = sessionRepository.findById(sessionId).orElse(null); //exception
+//
+//        //Update Last Activity
+//        session.setLastActive(LocalDateTime.now());
+//        sessionRepository.save(session);
+//
+//        //Recover and update context
+//        Context context = contextRepository.findBySessionId(session.getId()).orElseThrow(); //exception
+//
+//        Map<String, Object> contextMap = deserializeContext(context.getContextJson());
+//
+//        String response = generateResponse(message, contextMap);
+//
+//
+//        context.setContextJson(serializeContext(contextMap));
+//        context.setUpdatedAt(LocalDateTime.now());
+//        contextRepository.save(context);
+//
+//        return response;
+//
+//    }
+//
+//    private Map<String, Object> deserializeContext(String json) throws JsonProcessingException {
+//        return new ObjectMapper().readValue(json, new TypeReference<Map<String, Object>>() {});
+//    }
+//
+//    private String serializeContext(Map<String, Object> map) throws JsonProcessingException {
+//        return new ObjectMapper().writeValueAsString(map);
+//    }
 
 
 }
