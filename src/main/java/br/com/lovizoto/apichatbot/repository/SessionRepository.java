@@ -17,8 +17,9 @@ public interface SessionRepository extends JpaRepository<Session, String> {
 
     Optional<Session> findByUserIdAndStatus(String userId, SessionStatus status);
 
-    @Modifying
-    @Query("UPDATE Session s SET s.lastActive = :now, s.status = :status WHERE s.id = :id")
-    void updateActivity(@Param("id") Long id, @Param("now") LocalDateTime now, @Param("status") SessionStatus status);
+
+//    @Modifying
+//    @Query("UPDATE Session s SET s.lastActive = :now, s.status = :status WHERE s.id = :id")
+//    void updateActivity(@Param("id") Long id, @Param("now") LocalDateTime now, @Param("status") SessionStatus status);
 
 }

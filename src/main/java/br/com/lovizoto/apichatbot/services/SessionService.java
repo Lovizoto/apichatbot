@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -20,89 +21,49 @@ public class SessionService {
 
 
     private final SessionRepository sessionRepository;
+    private final ContextService contextService;
 
-    private final ContextRepository contextRepository;
-
-    private final NlpService nlpService;
-
-    public SessionService(SessionRepository sessionRepository, ContextRepository contextRepository, NlpService nlpService) {
+    public SessionService(SessionRepository sessionRepository, ContextService contextService) {
         this.sessionRepository = sessionRepository;
-        this.contextRepository = contextRepository;
-        this.nlpService = nlpService;
+        this.contextService = contextService;
     }
 
-    public String createSession(String userId) {
+    public String getOrCreateSession(String userId) {
 
-        sessionRepository.findByUserIdAndStatus(userId, SessionStatus.ACTIVE)
-                .ifPresent(session -> {
-                    //close if inative and update
+        // Attempts to find an ACTIVE session for the user
+        return sessionRepository.findByUserIdAndStatus(userId, SessionStatus.ACTIVE)
+                .map(session -> {
+
                     if (session.getLastActive().isBefore(LocalDateTime.now().minusHours(2))) {
-                        session.setStatus(SessionStatus.CLOSED);
+                        session.setStatus(SessionStatus.EXPIRED);
                         sessionRepository.save(session);
-                    } else {
-                        //throw exception here
+                        return createNewSession(userId);
                     }
+                    return session.getId();
 
-                });
+                })
+                .orElseGet(() -> createNewSession(userId));
 
-        //create a new session if not exist active session
+    }
+
+    @Transactional
+    public String createNewSession(String userId) {
         Session session = new Session();
         session.setUserId(userId);
+        session.setStartedAt(LocalDateTime.now());
+        session.setLastActive(LocalDateTime.now());
+        session.setStatus(SessionStatus.ACTIVE);
+        Session savedSession = sessionRepository.save(session);
+
+        contextService.createEmptyContext(savedSession.getId());
+        return savedSession.getId();
+    }
+
+    public void updateSessionActivity(String sessionId){
+        Session session = sessionRepository.findById(sessionId).orElseThrow(); //add custom exception
+        session.setLastActive(LocalDateTime.now());
         sessionRepository.save(session);
-
-        //create a context
-        Context context = new Context();
-        context.setSessionId(session.getId());
-        context.setContextJson("{}");
-        contextRepository.save(context);
-
-
-        return session.getId();
     }
-
-
-    public String processMessage(String sessionId, String message) throws JsonProcessingException {
-
-        Context context = contextRepository.findBySessionId(sessionId).orElseThrow(); //handle with exception
-
-        String response = nlpService.processMessage(message, context.getContextJson());
-        //context.updateContext(response)
-
-        return response;
-
-    }
-
-//    public String processMessage(String sessionId, String message) throws JsonProcessingException {
-//
-//        Session session = sessionRepository.findById(sessionId).orElse(null); //exception
-//
-//        //Update Last Activity
-//        session.setLastActive(LocalDateTime.now());
-//        sessionRepository.save(session);
-//
-//        //Recover and update context
-//        Context context = contextRepository.findBySessionId(session.getId()).orElseThrow(); //exception
-//
-//        Map<String, Object> contextMap = deserializeContext(context.getContextJson());
-//
-//        String response = generateResponse(message, contextMap);
-//
-//
-//        context.setContextJson(serializeContext(contextMap));
-//        context.setUpdatedAt(LocalDateTime.now());
-//        contextRepository.save(context);
-//
-//        return response;
-//
-//    }
-//
-//    private Map<String, Object> deserializeContext(String json) throws JsonProcessingException {
-//        return new ObjectMapper().readValue(json, new TypeReference<Map<String, Object>>() {});
-//    }
-//
-//    private String serializeContext(Map<String, Object> map) throws JsonProcessingException {
-//        return new ObjectMapper().writeValueAsString(map);
-//    }
 
 
 }

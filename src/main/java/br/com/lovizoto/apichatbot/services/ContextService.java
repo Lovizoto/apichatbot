@@ -17,7 +17,7 @@ public class ContextService {
         this.contextRepository = contextRepository;
     }
 
-    public Context findBySessionId(String sessionId) {
+    public Context findContextBySessionId(String sessionId) {
         return contextRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new RuntimeException("Context not found for session: " + sessionId)); //use a custom exception
     }
