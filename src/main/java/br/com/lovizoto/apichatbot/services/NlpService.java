@@ -15,7 +15,7 @@ public class NlpService {
 
         Map<String, Object> contextMap = deserializeContext(contextJson);
 
-        String response = genereateResponse(message, contextMap);
+        String response = generateResponse(message, contextMap);
 
         //update context here???
 
@@ -32,6 +32,8 @@ public class NlpService {
 
 
     //create a provider by rest api of any chatbot (openai, gemini, etc) - use the method generate response
+
+
 
 
 }
